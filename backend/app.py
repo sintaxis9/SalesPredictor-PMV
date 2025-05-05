@@ -3,7 +3,9 @@ from flask_cors import CORS
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-import io  
+import io
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' 
 
 app = Flask(__name__, static_folder='static')
 CORS(app, resources={r"/*": {"origins": [
