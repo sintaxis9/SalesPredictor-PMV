@@ -25,14 +25,13 @@ const Predictor = () => {
       const selectedFile = e.target.files[0];
       setFile(selectedFile);
       
-      // Leer y mostrar el contenido del CSV
       const reader = new FileReader();
       reader.onload = (e) => {
         const csvData = e.target?.result as string;
         const rows = csvData.split('\n').map(row => row.split(','));
         setCsvPreview({
           headers: rows[0].map(header => header.trim()),
-          rows: rows.slice(1, 6).map(row => row.map(cell => cell.trim())) // Muestra solo las primeras 5 filas
+          rows: rows.slice(1, 6).map(row => row.map(cell => cell.trim())) 
         });
       };
       reader.readAsText(selectedFile);
