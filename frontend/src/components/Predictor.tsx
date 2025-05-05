@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import axios from 'axios';
+import { useRouter } from 'next/router';
 
 interface PredictionResponse {
   prediction: number;
@@ -8,8 +9,8 @@ interface PredictionResponse {
 }
 
 const Predictor = () => {
+  const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
-  const [prediction, setPrediction] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,7 +38,7 @@ const Predictor = () => {
         );
         
         if (response.data.status === 'success') {
-          setPrediction(response.data.prediction);
+          router.push(`/results?prediction=${response.data.prediction}`);
         } else {
           setError(response.data.error || 'Error desconocido');
         }
@@ -169,34 +170,6 @@ const Predictor = () => {
           textAlign: 'center'
         }}>
           ⚠️ Error: {error}
-        </div>
-      )}
-
-      {prediction !== null && (
-        <div style={{ 
-          marginTop: '2rem',
-          padding: '1.5rem',
-          backgroundColor: '#e2f3ff',
-          borderRadius: '8px',
-          textAlign: 'center'
-        }}>
-          <h2 style={{ color: '#004085', marginBottom: '0.5rem' }}>
-            🎯 Predicción de Ventas
-          </h2>
-          <div style={{ 
-            fontSize: '2rem',
-            color: '#004085',
-            fontWeight: 'bold'
-          }}>
-            ${prediction.toFixed(2)}
-          </div>
-          <p style={{ 
-            marginTop: '0.5rem',
-            color: '#004085',
-            fontSize: '0.9rem'
-          }}>
-            (Basado en los datos proporcionados)
-          </p>
         </div>
       )}
     </div>
