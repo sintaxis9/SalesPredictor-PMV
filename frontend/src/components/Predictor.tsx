@@ -51,7 +51,7 @@ const Predictor = () => {
         const csvData = e.target?.result;
         
         const response = await axios.post<PredictionResponse>(
-          process.env.NEXT_PUBLIC_API_URL + '/predict',
+          `${process.env.NEXT_PUBLIC_API_URL}/predict`,
           { csv: csvData }
         );
         

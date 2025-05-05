@@ -6,7 +6,10 @@ import tensorflow as tf
 import io  
 
 app = Flask(__name__, static_folder='static')
-CORS(app)
+CORS(app, resources={r"/*": {"origins": [
+    "http://localhost:3000",
+    "https://*.vercel.app"  
+]}})
 
 @app.route('/')
 def home():
