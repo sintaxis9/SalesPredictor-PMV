@@ -8,15 +8,34 @@ interface PredictionResponse {
   error?: string;
 }
 
+interface CSVPreview {
+  headers: string[];
+  rows: string[][];
+}
+
 const Predictor = () => {
   const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [csvPreview, setCsvPreview] = useState<CSVPreview | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      setFile(e.target.files[0]);
+      const selectedFile = e.target.files[0];
+      setFile(selectedFile);
+      
+      // Leer y mostrar el contenido del CSV
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const csvData = e.target?.result as string;
+        const rows = csvData.split('\n').map(row => row.split(','));
+        setCsvPreview({
+          headers: rows[0].map(header => header.trim()),
+          rows: rows.slice(1, 6).map(row => row.map(cell => cell.trim())) // Muestra solo las primeras 5 filas
+        });
+      };
+      reader.readAsText(selectedFile);
     }
   };
 
@@ -75,7 +94,7 @@ const Predictor = () => {
   return (
     <div style={{ 
       padding: '2rem', 
-      maxWidth: '600px', 
+      maxWidth: '800px',
       margin: '0 auto',
       fontFamily: 'Arial, sans-serif'
     }}>
@@ -159,6 +178,86 @@ const Predictor = () => {
           {loading ? '📡 Procesando...' : '📊 Predecir Ventas'}
         </button>
       </form>
+
+      {csvPreview && (
+        <div style={{ 
+          marginTop: '2rem',
+          border: '1px solid #e0e0e0',
+          borderRadius: '8px',
+          overflow: 'hidden',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+        }}>
+          <h3 style={{
+            padding: '1rem',
+            background: '#f8f9fa',
+            margin: 0,
+            borderBottom: '1px solid #e0e0e0',
+            fontSize: '1.1em'
+          }}>
+            Vista previa del CSV ({csvPreview.rows.length} filas mostradas)
+          </h3>
+          
+          <div style={{ 
+            maxHeight: '400px',
+            overflow: 'auto'
+          }}>
+            <table style={{ 
+              width: '100%',
+              borderCollapse: 'collapse',
+              backgroundColor: 'white'
+            }}>
+              <thead>
+                <tr>
+                  {csvPreview.headers.map((header, index) => (
+                    <th 
+                      key={index}
+                      style={{
+                        padding: '12px',
+                        textAlign: 'left',
+                        backgroundColor: '#f1f3f5',
+                        borderBottom: '2px solid #dee2e6',
+                        position: 'sticky',
+                        top: 0
+                      }}
+                    >
+                      {header}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              
+              <tbody>
+                {csvPreview.rows.map((row, rowIndex) => (
+                  <tr 
+                  key={rowIndex}
+                  style={{
+                    borderBottom: '1px solid #dee2e6',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.2s'
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f8f9fa')}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'white')}
+                >
+                    {row.map((cell, cellIndex) => (
+                      <td 
+                        key={cellIndex}
+                        style={{
+                          padding: '12px',
+                          fontSize: '0.9em',
+                          color: '#495057',
+                          whiteSpace: 'nowrap'
+                        }}
+                      >
+                        {cell || <span style={{ color: '#868e96' }}>N/A</span>}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {error && (
         <div style={{ 
