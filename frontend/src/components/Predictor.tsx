@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/router';
+import Papa from 'papaparse';
+
+const MAX_FILE_SIZE = 1024 * 1024;
 
 interface PredictionResponse {
   prediction: number;
@@ -10,7 +13,7 @@ interface PredictionResponse {
 
 interface CSVPreview {
   headers: string[];
-  rows: string[][];
+  rows: (string | number)[][];
 }
 
 const Predictor = () => {
@@ -20,18 +23,38 @@ const Predictor = () => {
   const [error, setError] = useState<string | null>(null);
   const [csvPreview, setCsvPreview] = useState<CSVPreview | null>(null);
 
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const selectedFile = e.target.files[0];
+
+      if (selectedFile.size > MAX_FILE_SIZE) {
+        setError('El archivo es demasiado grande (máx 1MB)');
+        return;
+      }
+
       setFile(selectedFile);
       
       const reader = new FileReader();
       reader.onload = (e) => {
         const csvData = e.target?.result as string;
-        const rows = csvData.split('\n').map(row => row.split(','));
-        setCsvPreview({
-          headers: rows[0].map(header => header.trim()),
-          rows: rows.slice(1, 6).map(row => row.map(cell => cell.trim())) 
+        Papa.parse<{ [key: string]: string }>(csvData, {
+          header: true,
+          skipEmptyLines: true,
+          complete: (result) => {
+            const formattedRows = result.data
+              .slice(0, 5)
+              .map(row => Object.values(row).map(cell => cell || 'N/A')); 
+
+            setCsvPreview({
+              headers: result.meta.fields || [],
+              rows: formattedRows
+            });
+          },
+          error: (error) => {
+            console.error('Error parsing CSV:', error);
+            setError('Formato de CSV inválido');
+          }
         });
       };
       reader.readAsText(selectedFile);
@@ -40,6 +63,7 @@ const Predictor = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('[DEBUG] Intento de enviar archivo:', file?.name);
     if (!file) return;
 
     setLoading(true);
@@ -63,7 +87,13 @@ const Predictor = () => {
       };
       reader.readAsText(file);
     } catch (err) {
-      setError('Error al procesar el archivo');
+      console.error('[ERROR] Detalles completos:', err);
+      if (axios.isAxiosError(err)) {
+        setError(`Error ${err.response?.status}: ${err.response?.data?.error || 'Sin detalles'}`);
+      } else {
+        setError('Error inesperado al procesar el archivo');
+      }
+
     } finally {
       setLoading(false);
     }

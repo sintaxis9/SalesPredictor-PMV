@@ -8,10 +8,14 @@ import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' 
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": [
-    "http://localhost:3000",
-    "https://sales-predictor-pmv.vercel.app"  
-]}})
+CORS(app, resources={r"/*": {
+    "origins": [
+        "http://localhost:3000",
+        "https://sales-predictor-pmv.vercel.app"
+    ],
+    "methods": ["POST", "GET", "OPTIONS"],  
+    "allow_headers": ["Content-Type", "Authorization"]
+}})
 
 @app.route('/')
 def home():
@@ -20,8 +24,10 @@ def home():
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
+        print("[DEBUG] Solicitud recibida. Datos:", request.json)
         csv_data = request.json.get('csv', '')
-        
+        print("[DEBUG] Primeras 50 letras del CSV:", csv_data[:50])
+
         df = pd.read_csv(io.StringIO(csv_data))
         
         mock_prediction = len(df) * 1000
